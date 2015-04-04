@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<style type="text/css">
+div#video_player_box{ 
+	width: 600px; 
+	background: #000;
+	margin: 0px auto;
+	margin-top: 80px;
+	margin-bottom: auto;
+	text-align: center;
+}
+div#video_controls_bar{ 
+	height:30px; 
+	background: #000; 
+	color: #999;
+	padding-top: 2px;
+	font-size: 13px;
+	font-family: "Times New Roman", Times, serif;
+	display: table;
+}	
+button#playBtn{
+	background:url(img/pause.png);
+	border:none;
+	width:20px;
+	height:20px;
+	cursor:pointer;
+	opacity: 0.5;
+	margin-left: 20px;
+	position: relative;
+    top: 2px;
+}
+button#videomutebtn{
+	background:url(img/unmuted.png);
+	border:none;
+	width:25px;
+	height:20px;
+	margin-left: 230px;
+	cursor:pointer;
+	opacity: 0.5;
+	position: relative;
+    top: 1px;
+}
+button#fullscreenbtn{
+	background:url(img/fullscreen.png);
+	border:none;
+	width:25px;
+	height:20px;
+	margin-left: 80px;
+	cursor:pointer;
+	opacity: 0.5;
+	position: relative;
+    top: 1px;
+}
+span#currenttimetxt{
+    margin-left: 10px;
+}
+button#playBtn:hover{opacity:0.8;}
+button#videomutebtn:hover{opacity:0.8;}
+button#fullscreenbtn:hover{opacity:0.8;}
+input#seekslider{ 
+	width: 594px;
+	height: 3px;
+}
+input#volumeslider{ 
+	margin-left: 10px;
+	width: 80px;
+    height: 3px;
+    position: relative;
+    bottom: 3px;
+}
+button:focus{
+	outline:0 !important;
+}
+input:focus{
+	outline:0 !important;
+}
+input[id='seekslider'] {
+  background: linear-gradient(to right, #469948 0%, black 0%);
+  border: solid 1px #444;
+  height: 10px;
+    
+  -webkit-appearance: none;
+}
+input[id='seekslider']::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  background: #469948;
+  border: solid 3px white;
+  height: 12px;
+  width: 12px;
+  border-radius: 100%;
+  cursor:pointer;
+}
+input[id='volumeslider'] {
+  background: linear-gradient(to right, #469948 100%, black 0%);
+  border: solid 0px #444;
+  border-radius: 0px;
+  height: 10px;
+    
+  -webkit-appearance: none;
+}
+input[id='volumeslider']::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  background: #469948;	
+  height: 15px;
+  width: 5px;
+  border-radius: 0%;
+  cursor:pointer;
+} 
+</style>
+
+<script>
+//UI
+var video;
+var	playBtn, videomutebtn, fullscreenbtn;
+var	seekslider, volumeslider; 
+var currenttimetxt, durationtimetext;
+
+//control variance
+var updateplayprocess;
+
+
+function initializePlayer() {
+	// Set object references
+	// UI
+	video = document.getElementById("video");
+
+	playBtn = document.getElementById("playBtn");
+	videomutebtn = document.getElementById("videomutebtn");
+	fullscreenbtn = document.getElementById("fullscreenbtn");
+
+	seekslider = document.getElementById("seekslider");
+	volumeslider = document.getElementById("volumeslider");
+
+	currenttimetxt = document.getElementById("currenttimetxt");
+	durationtimetext = document.getElementById("durationtimetext");
+
+	volumeslider.value = volumeslider.max;
+
+	// control variant
+	updateplayprocess = true;
+
+	// Add event listeners
+	videomutebtn.addEventListener("click", videoMute, false);
+	playBtn.addEventListener("click", playPause, false);
+	fullscreenbtn.addEventListener("click", toggleFullScreen, false);
+
+	seekslider.addEventListener("input", videoSeek, false);
+	volumeslider.addEventListener("input", setVolume , false);
+
+	video.addEventListener("timeupdate", seektimeupdate, false); 
+}
+
+window.onload = initializePlayer;
+
+; 
+
+// Button 
+function playPause(){
+	if(video.paused) {
+		video.play();
+		playBtn.style.background = "url(img/pause.png)";
+	}else {
+		video.pause();
+		playBtn.style.background = "url(img/start.png)";
+	}
+}
+
+function videoMute() {
+	if(video.muted) {
+		video.muted = false;
+		videomutebtn.style.background = "url(img/unmuted.png)";
+		volumeslider.value = volumeslider.max;
+		video.volume = volumeslider.value / 100;
+	}else {
+		video.muted = true;
+		videomutebtn.style.background = "url(img/muted.png)";
+		volumeslider.value = volumeslider.min;
+	}
+} 
+
+function toggleFullScreen() {
+	if(video.requestFullScreen) {
+		video.requestFullScreen();
+	} else if(video.webkitRequestFullScreen) {
+		video.webkitRequestFullScreen();
+	} else if(video.mozRequestFullScreen) {
+		video.mozRequestFullScreen();
+	}
+}
+
+// Slider
+function videoSeek() {
+	var seekto = video.duration * (seekslider.value / 100);
+	video.currentTime = seekto;
+}
+
+function setVolume() {
+	video.volume = volumeslider.value / 100;
+	if(volumeslider.value == 0) {
+		video.muted = true;
+		videomutebtn.style.background = "url(img/muted.png)";
+	}else {
+		video.muted = false;
+		videomutebtn.style.background = "url(img/unmuted.png)";
+	}
+}
+
+// video
+function seektimeupdate() {
+	if(!updateplayprocess)
+		return;
+
+	var nt = video.currentTime * (100 / video.duration);
+	seekslider.value = nt;
+
+	var currentmins = Math.floor(video.currentTime / 60);
+	var currentsecs = Math.floor(video.currentTime - currentmins * 60);
+	var durationmins = Math.floor(video.duration / 60);
+	var durationsecs = Math.floor(video.duration - durationmins * 60);
+
+	if(currentsecs < 10){currentsecs = "0" + currentsecs;}
+	if(durationsecs < 10){durationsecs = "0" + durationsecs;}
+	if(currentmins < 10){currentmins = "0" + currentmins;}
+	if(durationmins < 10){durationmins = "0" + durationmins;}
+
+	currenttimetxt.innerHTML = currentmins+":"+currentsecs;
+	durationtimetext.innerHTML = durationmins+":"+durationsecs;
+}
+
+</script>
+
+</head>
+
+<body>
+<div id="video_player_box">
+	<video id="video" width="480" height="300" autoplay>
+		<source src="video/Tom and Jerry.mp4">
+	</video>
+	
+	<input id="seekslider" type="range" min="0" max="100" value="0" step="0.1">
+	
+	<div id="video_controls_bar">
+		<button id="playBtn"></button>
+		<span id="currenttimetxt"></span> / <span id="durationtimetext"></span>
+		<button id="videomutebtn"></button>
+		<input id="volumeslider" type="range" min="0" max="100" value="0" step="1">	
+		<button id="fullscreenbtn"></button>		
+	</div>
+</div>
+<script type="text/javascript" src="jquery/jquery.js"></script>
+<script type="text/javascript" src="jquery/play.js"></script>
+</body>
+</html>
